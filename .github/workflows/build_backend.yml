@@ -1,0 +1,67 @@
+name: Build backend
+
+on:
+  pull_request:
+    branches: [develop]
+    paths:
+      # Skip CPP pipeline if the changes are only GUI
+      - "**"
+      - "!falcon_gui/**"
+      - "!.github/workflows/build_gui.yml"
+      - "!.github/workflows/release_all.yml"
+jobs:
+  build-linux:
+    name: Build backend
+    runs-on: ubuntu-24.04
+
+    strategy:
+      matrix:
+        compiler: [clang] # gcc is disabled for now
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sh scripts/setup/install_deps.sh
+          sh scripts/setup/install_cmake.sh
+          if [ "${{ matrix.compiler }}" == "clang" ]; then
+            sh scripts/setup/install_llvm.sh
+          fi
+
+      - name: Run clang-format (only for clang)
+        if: matrix.compiler == 'clang'
+        run: |
+          sh scripts/format.sh
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "Following files seem to be not formatted. Please run './scripts/format.sh' locally and commit the changes."
+            git --no-pager diff --name-only
+            exit 1
+          fi
+
+      - name: Configure CMake
+        run: |
+          mkdir -p build
+          cd build
+          if [ "${{ matrix.compiler }}" == "clang" ]; then
+            C_PATH=/usr/local/bin/clang
+            CXX_PATH=/usr/local/bin/clang++
+          else
+            C_PATH=/usr/bin/gcc
+            CXX_PATH=/usr/bin/g++
+          fi
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=$C_PATH \
+            -DCMAKE_CXX_COMPILER=$CXX_PATH
+
+      - name: Build project
+        run: |
+          cd build
+          make -j$(nproc)
+
+      - name: Run clang-tidy (only for clang)
+        if: matrix.compiler == 'clang'
+        run: |
+          sh scripts/tidy.sh
