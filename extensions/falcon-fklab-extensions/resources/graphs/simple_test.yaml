@@ -1,0 +1,14 @@
+processors:
+    source:
+      class: SimpleSource
+      options:
+        nchannels: 4
+        nsamples: 100
+        sample_rate: 1000.0
+        npackets: 10
+    
+    sink:
+      class: SimpleSink
+
+connections:
+    - source.data = sink.data

@@ -6,4 +6,13 @@ docs/_doxygen/*
 docs/api/*
 
 # Extensions in development
-extensions/*
+# extensions/*
+
+*.png
+*.svg
+*.gif
+**/docs/*
+
+/venv/*
+
+*.log
