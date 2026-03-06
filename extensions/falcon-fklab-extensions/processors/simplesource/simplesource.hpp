@@ -36,8 +36,9 @@ class SimpleSource : public IProcessor {
 
   options::Value<unsigned int, false> nchannels_{4};
   options::Value<unsigned int, false> nsamples_{100};
-  options::Value<double, false> sample_rate_{1000.0};
-  options::Value<unsigned int, false> npackets_{10};
+  options::Value<unsigned int, false> n_messages_{10};
+  options::Value<std::string, false> output_file_{"Producer.csv"};
   
   unsigned int packet_count_ = 0;
+  inline static std::vector<double> send_times;
 };

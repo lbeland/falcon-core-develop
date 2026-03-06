@@ -13,6 +13,8 @@ docs/api/*
 *.gif
 **/docs/*
 
+*.csv
+
 /venv/*
 
 *.log

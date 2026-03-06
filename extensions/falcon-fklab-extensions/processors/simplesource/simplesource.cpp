@@ -25,60 +25,115 @@
 SimpleSource::SimpleSource() : IProcessor(PRIORITY_HIGH) {
   add_option("nchannels", nchannels_, "Number of channels to generate.");
   add_option("nsamples", nsamples_, "Number of samples per packet.");
-  add_option("sample_rate", sample_rate_, "Sample rate in Hz.");
-  add_option("npackets", npackets_, "Number of packets to generate (0 = infinite).");
+  add_option("n_messages", n_messages_, "Number of packets to generate (0 = infinite).");
+  add_option("output_file", output_file_, "Path to output CSV file.");
 }
 
 void SimpleSource::CreatePorts() {
   data_out_port_ = create_output_port<MultiChannelType<double>>(
       "data",
-      MultiChannelType<double>::Parameters(nchannels_(), nsamples_(), sample_rate_()),
+      MultiChannelType<double>::Parameters(nchannels_(), nsamples_(), 1.0),
       PortOutPolicy(SlotRange(1)));
 }
 
 void SimpleSource::CompleteStreamInfo() {
   // Set the parameters for the output stream
   dynamic_cast<StreamInfo<MultiChannelType<double>>&>(data_out_port_->slot(0)->streaminfo())
-      .set_parameters(MultiChannelType<double>::Parameters(nchannels_(), nsamples_(), sample_rate_()));
+      .set_parameters(MultiChannelType<double>::Parameters(nchannels_(), nsamples_(), 1.0));
+}
+
+#include <chrono>
+
+double get_source_time() {
+    return std::chrono::duration<double>(
+        std::chrono::steady_clock::now().time_since_epoch()
+    ).count();
 }
 
 void SimpleSource::Process(ProcessingContext &context) {
   MultiChannelType<double>::Data *data_out = nullptr;
+  send_times.resize(n_messages_());
 
-  while (!context.terminated()) {
-    // Check if we've sent enough packets
-    if (npackets_() > 0 && packet_count_ >= npackets_()) {
-      LOG(INFO) << name() << ". Generated " << packet_count_ << " packets. Done.";
-      break;
-    }
-
+  // Warm-up
+  double now = get_source_time();
+  for (int i=0; i < 500 && !context.terminated(); i++) {
     // Claim output buffer
     data_out = data_out_port_->slot(0)->ClaimData(false);
-    
-    // Fill with ones
-    std::fill(data_out->data().begin(), data_out->data().end(), 1.0);
-    printf("%s. Generated packet %u with %zu channels and %zu samples at %.2f Hz.\n",
-           name().c_str(), packet_count_ + 1, data_out->nchannels(), data_out->nsamples(),
-           data_out->sample_rate());
-    
-    // Set timestamps
-    uint64_t hw_timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-    data_out->set_hardware_timestamp(hw_timestamp);
-    data_out->set_source_timestamp();
-    
+
+    // Set timestamp as value
+    std::fill(data_out->data().begin(), data_out->data().end(), now);
+
     // Publish data
     data_out_port_->slot(0)->PublishData();
-    
-    packet_count_++;
-    
-    // Small delay to avoid overwhelming the system
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
+
+  // Measurement phase
+  for (int i=0; i < n_messages_() && !context.terminated(); i++) {
+    // Claim output buffer
+    data_out = data_out_port_->slot(0)->ClaimData(false);
+
+    // Set timestamp as value
+    double timestamp = get_source_time();
+    std::fill(data_out->data().begin(), data_out->data().end(), timestamp);
+
+    // Publish data
+    data_out_port_->slot(0)->PublishData();
+    // printf("%s. Sent message %u with timestamp %9f.\n",
+    //     name().c_str(), packet_count_ + 1, timestamp);
+    send_times[i] = timestamp;
+
+    // sleep(1);
+    
+  }
+
 }
 
 void SimpleSource::Postprocess(ProcessingContext &context) {
-  LOG(INFO) << name() << ". Generated " << packet_count_ << " data packets.";
+
+  // Calculate Statistics
+  printf("Total messages sent: %d\n", n_messages_());
+
+  // Calculate statistics (skip first measurement)
+  double sum_diff = 0.0;
+  double max_diff = 0.0;
+  int max_idx = 0;
+  double sum_sq_diff = 0.0;
+  std::vector<double> send_times_diff;
+  send_times_diff.resize(n_messages_() - 1);
+
+  for (int i = 0; i < n_messages_()-1; i++) {
+      double diff = send_times[i+1] - send_times[i];
+      send_times_diff[i] = diff;
+      sum_diff += diff;
+      sum_sq_diff += diff * diff;
+      if (diff > max_diff) {
+          max_diff = diff;
+          max_idx = i;
+      }
+  }
+
+  double avg_period_sec = sum_diff / (n_messages_() - 1);
+  double avg_period = avg_period_sec * 1e6;  // us
+  double variance = (sum_sq_diff / (n_messages_() - 1)) - (avg_period_sec * avg_period_sec);  // s²
+  double std_period = sqrt(fmax(0.0, variance)) * 1e6;  // us
+
+  printf("Average send period (us): %.6f\n", avg_period);
+  printf("Max send period (us): %.6f, idx: %d\n", max_diff * 1e6, max_idx);
+  printf("Std send period (us): %.6f\n", std_period);
+
+  // Save to CSV
+  FILE *fp = fopen(output_file_().c_str(), "w");
+  if (fp == NULL) {
+      fprintf(stderr, "Error opening file %s\n", output_file_().c_str());
+      return;
+  }
+
+  fprintf(fp, "Metric,Send_period\n");
+  fprintf(fp, "mean,%.6f\n", avg_period);
+  fprintf(fp, "std,%.6f\n", std_period);
+  fprintf(fp, "max,%.6f\n", max_diff * 1e6);
+
+  fclose(fp);
 }
 
 REGISTERPROCESSOR(SimpleSource);

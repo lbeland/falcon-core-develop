@@ -200,6 +200,10 @@ int main(int argc, char** argv) {
             cl.AddCommand(command);
 
             command.clear();
+            command.push_back("quit");
+            cl.AddCommand(command);
+
+            command.clear();
         }
     }
 
