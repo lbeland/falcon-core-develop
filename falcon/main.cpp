@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
     std::string logpath = std::regex_replace(config.logging_path(), re, home);
 
     auto worker = g3::LogWorker::createLogWorker();
-    auto defaultHandler = worker->addDefaultLogger("falcon", logpath);
+    // auto defaultHandler = worker->addDefaultLogger("falcon", logpath);
 
     // initialize logging before creating additional loggers
     g3::initializeLogging(worker.get());
@@ -198,17 +198,12 @@ int main(int argc, char** argv) {
             command.push_back("start");
 
             cl.AddCommand(command);
-
-            command.clear();
-            command.push_back("quit");
-            cl.AddCommand(command);
-
-            command.clear();
         }
     }
 
     // set up Command handler
     commands::CommandHandler commandhandler(context);
+    commandhandler.setAutoShutdownAfterProcessing(config.graph_autostart() && graph_file.size() > 0);
 
     // add command sources to handler
     commandhandler.addSource(cl);

@@ -15,10 +15,10 @@ REPO_ROOT = Path(__file__).resolve().parent
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n_messages", type=int, default=100000)
-    parser.add_argument("--msg_size", type=int, default=1)
+    parser.add_argument("--n_messages", type=int, default=1000000)
+    parser.add_argument("--msg_size", type=int, default=100)
     parser.add_argument("--num_channels", type=int, default=128)
-    parser.add_argument("--max_buffer_size", type=int, default=10)  # not used
+    parser.add_argument("--max_buffer_size", type=int, default=10)
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--output_file", type=str, default="Producer.csv")
     args = parser.parse_args()
@@ -28,13 +28,11 @@ def main():
     os.makedirs(results_folder, exist_ok=True)
 
     # 1) Start consumer first
-    output_path_consumer = REPO_ROOT / results_folder / f"{args.num_channels}_{args.msg_size}_Consumer.csv"
+    output_path = str(REPO_ROOT / results_folder / f"{args.num_channels}_{args.msg_size}")
    
-    if os.path.exists(output_path_consumer) and not args.overwrite:
+    if os.path.exists(output_path + "_Consumer.csv") and not args.overwrite:
         return
     
-
-    output_path_producer = REPO_ROOT / results_folder / f"{args.num_channels}_{args.msg_size}_Producer.csv"
 
     graph = {
         "processors": {
@@ -44,14 +42,19 @@ def main():
                     "nchannels": args.num_channels,
                     "nsamples": args.msg_size,
                     "n_messages": args.n_messages,
-                    "output_file": str(output_path_consumer)
+                    "output_file": str(output_path)
+                },
+                "advanced":{
+                    "buffer_sizes": {
+                        "data": args.max_buffer_size
+                    }
                 }
             },
             "sink": {
                 "class": "SimpleSink",
                 "options": {
                     "n_messages": args.n_messages,
-                    "output_file": str(output_path_producer)
+                    "output_file": str(output_path)
                 }
             }
         },
@@ -63,11 +66,11 @@ def main():
     with open("extensions/falcon-fklab-extensions/resources/graphs/simple_test.yaml", "w") as f:
         yaml.safe_dump(graph, f, sort_keys=False)
 
-    graph_process = subprocess.Popen(["./build/falcon/falcon", "simple_test.yaml", "--autostart"])
+    graph_process = subprocess.Popen(["sudo","-E", "./build/falcon/falcon", "simple_test.yaml", "--autostart"])
 
     try:
         # 3) Wait for falcon to complete (processors will auto-exit after processing n_messages)
-        return_code = graph_process.wait(timeout=10)
+        return_code = graph_process.wait()#timeout=20)
         print(f"Falcon process exited with code {return_code}")
     except subprocess.TimeoutExpired:
         print("Timeout: Falcon did not complete within 10 seconds. Terminating...")

@@ -19,6 +19,8 @@
 
 #include "simplesink.hpp"
 #include "logging/log.hpp"
+#include <fstream>
+#include <iomanip>
 #include <chrono>
 #include <numeric>
 #include <limits>
@@ -78,6 +80,7 @@ void SimpleSink::Process(ProcessingContext &context) {
     packet_count_++;
     // Release data
     data_in_port_->slot(0)->ReleaseData();
+    // custom_sleep_for(500000);
   }
 
 }
@@ -140,18 +143,32 @@ void SimpleSink::Postprocess(ProcessingContext &context) {
 
 
   // Save to CSV
-  FILE *fp = fopen(output_file_().c_str(), "w");
-  if (fp == NULL) {
-      fprintf(stderr, "Error opening file %s\n", output_file_().c_str());
-      return;
+  std::string append = "_Consumer.csv";
+  std::ofstream output;
+  output.open(output_file_().c_str() + append);
+  output << "Metric,Recv_period,Latency,Throughput\n";
+  output << "mean," << avg_period << "," << avg_latency << "," << throughput << "\n";
+  output << "std," << std_period << "," << std_latency << ",\n";
+  output << "max," << max_diff*1e6 << "," << max*1e6 << ",\n";
+  output.close();
+
+  append = "_recv_times.csv";
+  std::ofstream recv_times_output;
+  recv_times_output << std::fixed << std::setprecision(17);
+  recv_times_output.open(output_file_().c_str() + append);
+  for (double t : recv_times_diff) {
+      recv_times_output << t << "\n";
   }
+  recv_times_output.close();
 
-  fprintf(fp, "Metric,Recv_period,Latency,Throughput\n");
-  fprintf(fp, "mean,%.6f,%.6f,%.6f\n", avg_period, avg_latency, throughput);
-  fprintf(fp, "std,%.6f,%.6f, \n", std_period, std_latency);
-  fprintf(fp, "max,%.6f,%.6f, \n", max_diff*1e6, max*1e6);
-
-  fclose(fp);
+  append = "_process_times.csv";
+  std::ofstream process_times_output;
+  process_times_output << std::fixed << std::setprecision(17);
+  process_times_output.open(output_file_().c_str() + append);
+  for (double t : process_times) {
+      process_times_output << t << "\n";
+  }
+  process_times_output.close();
 }
 
 REGISTERPROCESSOR(SimpleSink);

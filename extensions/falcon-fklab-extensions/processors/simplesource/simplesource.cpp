@@ -19,6 +19,8 @@
 
 #include "simplesource.hpp"
 #include "logging/log.hpp"
+#include <fstream>
+#include <iomanip>
 #include <thread>
 #include <chrono>
 
@@ -74,12 +76,12 @@ void SimpleSource::Process(ProcessingContext &context) {
 
     // Set timestamp as value
     double timestamp = get_source_time();
+    // data_out->data()[0] = timestamp;  // Set first sample to timestamp for easier debugging
     std::fill(data_out->data().begin(), data_out->data().end(), timestamp);
 
     // Publish data
     data_out_port_->slot(0)->PublishData();
-    // printf("%s. Sent message %u with timestamp %9f.\n",
-    //     name().c_str(), packet_count_ + 1, timestamp);
+    // printf("%s. Sent message %u with timestamp %9f.\n", name().c_str(), i + 1, timestamp);
     send_times[i] = timestamp;
 
     // sleep(1);
@@ -122,18 +124,23 @@ void SimpleSource::Postprocess(ProcessingContext &context) {
   printf("Std send period (us): %.6f\n", std_period);
 
   // Save to CSV
-  FILE *fp = fopen(output_file_().c_str(), "w");
-  if (fp == NULL) {
-      fprintf(stderr, "Error opening file %s\n", output_file_().c_str());
-      return;
+  std::string append = "_Producer.csv";
+  std::ofstream output;
+  output.open(output_file_().c_str() + append);
+  output << "Metric,Send_period\n";
+  output << "mean," << avg_period << "\n";
+  output << "std," << std_period << "\n";
+  output << "max," << max_diff*1e6 << "\n";
+  output.close();
+
+  append = "_send_times.csv";
+  std::ofstream send_times_output;
+  send_times_output << std::fixed << std::setprecision(17);
+  send_times_output.open(output_file_().c_str() + append);
+  for (double t : send_times_diff) {
+      send_times_output << t << "\n";
   }
-
-  fprintf(fp, "Metric,Send_period\n");
-  fprintf(fp, "mean,%.6f\n", avg_period);
-  fprintf(fp, "std,%.6f\n", std_period);
-  fprintf(fp, "max,%.6f\n", max_diff * 1e6);
-
-  fclose(fp);
+  send_times_output.close();
 }
 
 REGISTERPROCESSOR(SimpleSource);
