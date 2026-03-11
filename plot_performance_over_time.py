@@ -29,12 +29,12 @@ for idx, x in enumerate(zip([latency_files, send_files, recv_files], ["Latency",
 
     # create histogram axis to the right
     divider = make_axes_locatable(ax)
-    ax_hist = divider.append_axes("right", size="20%", pad=0.1, sharey=ax)
+    ax_hist = divider.append_axes("left", size="20%", pad=0.1, sharey=ax)
 
     for file in sorted(files):
         
         n_channels, msg_size, node, _ = file.split('_')
-        if int(n_channels) >= 1 and int(msg_size) >= 1024:
+        if int(n_channels) == 20 and int(msg_size) >= 1024:
             print(f"Processing file: {file} | Channels: {n_channels} | Msg Size: {msg_size} ")
 
             data = np.loadtxt(os.path.join(results_folder, file), skiprows=0, delimiter=',')

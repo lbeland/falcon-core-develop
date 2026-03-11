@@ -4,15 +4,15 @@ processors:
     options:
       nchannels: 40
       nsamples: 4096
-      n_messages: 100000
-      output_file: /home/linda/Documents/Benchmark_IPC/falcon-core-develop/c_results/40_4096
+      n_messages: 1000
+      output_file: /home/linda/Documents/Benchmark_IPC/falcon-core-develop/rt_c_results/40_4096
     advanced:
       buffer_sizes:
         data: 10
   sink:
     class: SimpleSink
     options:
-      n_messages: 100000
-      output_file: /home/linda/Documents/Benchmark_IPC/falcon-core-develop/c_results/40_4096
+      n_messages: 1000
+      output_file: /home/linda/Documents/Benchmark_IPC/falcon-core-develop/rt_c_results/40_4096
 connections:
 - source.data = sink.data

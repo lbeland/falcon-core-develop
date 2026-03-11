@@ -15,7 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parent
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n_messages", type=int, default=1000000)
+    parser.add_argument("--n_messages", type=int, default=1000)
     parser.add_argument("--msg_size", type=int, default=100)
     parser.add_argument("--num_channels", type=int, default=128)
     parser.add_argument("--max_buffer_size", type=int, default=10)
@@ -23,7 +23,7 @@ def main():
     parser.add_argument("--output_file", type=str, default="Producer.csv")
     args = parser.parse_args()
 
-    results_folder = "c_results"
+    results_folder = "rt_c_results"
 
     os.makedirs(results_folder, exist_ok=True)
 
@@ -66,7 +66,7 @@ def main():
     with open("extensions/falcon-fklab-extensions/resources/graphs/simple_test.yaml", "w") as f:
         yaml.safe_dump(graph, f, sort_keys=False)
 
-    graph_process = subprocess.Popen(["sudo","-E", "./build/falcon/falcon", "simple_test.yaml", "--autostart"])
+    graph_process = subprocess.Popen(["sudo", "-E", "chrt", "-f", "99","./build/falcon/falcon", "simple_test.yaml", "--autostart"])
 
     try:
         # 3) Wait for falcon to complete (processors will auto-exit after processing n_messages)

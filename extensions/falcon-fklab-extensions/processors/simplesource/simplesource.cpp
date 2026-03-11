@@ -21,6 +21,7 @@
 #include "logging/log.hpp"
 #include <fstream>
 #include <iomanip>
+#include "threadutilities.hpp"
 #include <thread>
 #include <chrono>
 
