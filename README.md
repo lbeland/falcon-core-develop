@@ -5,7 +5,7 @@ sudo apt-get install libzmq3-dev
 sudo apt install gcc-14 g++-14
 
 mkdir build
-cd buildfolder in the path of your choice
+cd build
 cmake .. -DCMAKE_BUILD_TYPE=Debug
 # or in my case i needed to use this:
 cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=gcc-14 -DCMAKE_CXX_COMPILER=g++-14
