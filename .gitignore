@@ -18,4 +18,4 @@ docs/api/*
 /venv/*
 
 *.log
-_last_run*/
+_last_run*/*

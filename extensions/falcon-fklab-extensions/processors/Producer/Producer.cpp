@@ -45,8 +45,6 @@ void Producer::CompleteStreamInfo() {
       .set_parameters(MultiChannelType<double>::Parameters(nchannels_(), nsamples_(), 1.0));
 }
 
-#include <chrono>
-
 double get_source_time() {
     return std::chrono::duration<double>(
         std::chrono::steady_clock::now().time_since_epoch()
