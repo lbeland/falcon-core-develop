@@ -17,7 +17,7 @@
 // along with falcon-core. If not, see <http://www.gnu.org/licenses/>.
 // ---------------------------------------------------------------------
 
-#include "simplesink.hpp"
+#include "Consumer.hpp"
 #include "logging/log.hpp"
 #include <fstream>
 #include <iomanip>
@@ -25,12 +25,12 @@
 #include <numeric>
 #include <limits>
 
-SimpleSink::SimpleSink() : IProcessor(PRIORITY_HIGH) {
+Consumer::Consumer() : IProcessor(PRIORITY_HIGH) {
   add_option("n_messages", n_messages_, "Number of packets to receive (0 = infinite).");
   add_option("output_file", output_file_, "Path to output CSV file.");
 }
 
-void SimpleSink::CreatePorts() {
+void Consumer::CreatePorts() {
   data_in_port_ = create_input_port<MultiChannelType<double>>(
       "data", 
       MultiChannelType<double>::Capabilities(ChannelRange(1, 256), SampleRange(1, 10000)),
@@ -43,7 +43,7 @@ double get_sink_time() {
     ).count();
 }
 
-void SimpleSink::Process(ProcessingContext &context) {
+void Consumer::Process(ProcessingContext &context) {
   MultiChannelType<double>::Data *data_in = nullptr;
   recv_times.resize(n_messages_());
   process_times.resize(n_messages_());
@@ -85,7 +85,7 @@ void SimpleSink::Process(ProcessingContext &context) {
 
 }
 
-void SimpleSink::Postprocess(ProcessingContext &context) {
+void Consumer::Postprocess(ProcessingContext &context) {
   printf("Total messages processed: %d\n", packet_count_);
 
   // Jitter statistics
@@ -171,4 +171,4 @@ void SimpleSink::Postprocess(ProcessingContext &context) {
   process_times_output.close();
 }
 
-REGISTERPROCESSOR(SimpleSink);
+REGISTERPROCESSOR(Consumer);

@@ -17,7 +17,7 @@
 // along with falcon-core. If not, see <http://www.gnu.org/licenses/>.
 // ---------------------------------------------------------------------
 
-#include "simplesource.hpp"
+#include "Producer.hpp"
 #include "logging/log.hpp"
 #include <fstream>
 #include <iomanip>
@@ -25,21 +25,21 @@
 #include <thread>
 #include <chrono>
 
-SimpleSource::SimpleSource() : IProcessor(PRIORITY_HIGH) {
+Producer::Producer() : IProcessor(PRIORITY_HIGH) {
   add_option("nchannels", nchannels_, "Number of channels to generate.");
   add_option("nsamples", nsamples_, "Number of samples per packet.");
   add_option("n_messages", n_messages_, "Number of packets to generate (0 = infinite).");
   add_option("output_file", output_file_, "Path to output CSV file.");
 }
 
-void SimpleSource::CreatePorts() {
+void Producer::CreatePorts() {
   data_out_port_ = create_output_port<MultiChannelType<double>>(
       "data",
       MultiChannelType<double>::Parameters(nchannels_(), nsamples_(), 1.0),
       PortOutPolicy(SlotRange(1)));
 }
 
-void SimpleSource::CompleteStreamInfo() {
+void Producer::CompleteStreamInfo() {
   // Set the parameters for the output stream
   dynamic_cast<StreamInfo<MultiChannelType<double>>&>(data_out_port_->slot(0)->streaminfo())
       .set_parameters(MultiChannelType<double>::Parameters(nchannels_(), nsamples_(), 1.0));
@@ -53,7 +53,7 @@ double get_source_time() {
     ).count();
 }
 
-void SimpleSource::Process(ProcessingContext &context) {
+void Producer::Process(ProcessingContext &context) {
   MultiChannelType<double>::Data *data_out = nullptr;
   send_times.resize(n_messages_());
 
@@ -91,7 +91,7 @@ void SimpleSource::Process(ProcessingContext &context) {
 
 }
 
-void SimpleSource::Postprocess(ProcessingContext &context) {
+void Producer::Postprocess(ProcessingContext &context) {
 
   // Calculate Statistics
   printf("Total messages sent: %d\n", n_messages_());
@@ -144,4 +144,4 @@ void SimpleSource::Postprocess(ProcessingContext &context) {
   send_times_output.close();
 }
 
-REGISTERPROCESSOR(SimpleSource);
+REGISTERPROCESSOR(Producer);

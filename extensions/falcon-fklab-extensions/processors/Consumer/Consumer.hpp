@@ -20,24 +20,24 @@
 
 #include "iprocessor.hpp"
 #include "multichanneldata/multichanneldata.hpp"
-#include "options/options.hpp"
 
-class SimpleSource : public IProcessor {
+class Consumer : public IProcessor {
  public:
-  SimpleSource();
+    Consumer();
 
   void CreatePorts() override;
-  void CompleteStreamInfo() override;
   void Process(ProcessingContext &context) override;
   void Postprocess(ProcessingContext &context) override;
 
  protected:
-  PortOut<MultiChannelType<double>> *data_out_port_;
+  PortIn<MultiChannelType<double>> *data_in_port_;
 
-  options::Value<unsigned int, false> nchannels_{4};
-  options::Value<unsigned int, false> nsamples_{100};
-  options::Value<unsigned int, false> n_messages_{10};
-  options::Value<std::string, false> output_file_{"Producer.csv"};
+  options::Value<unsigned int, false> n_messages_{0};
+  options::Value<std::string, false> output_file_{"Consumer.csv"};
   
-  inline static std::vector<double> send_times;
+  unsigned int packet_count_ = 0;
+  unsigned int warm_up_count_ = 0;
+  double first_timestamp_ = 0.0;
+  inline static std::vector<double> recv_times;
+  inline static std::vector<double> process_times;
 };

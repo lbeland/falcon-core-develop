@@ -16,8 +16,8 @@ REPO_ROOT = Path(__file__).resolve().parent
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--n_messages", type=int, default=1000)
-    parser.add_argument("--msg_size", type=int, default=100)
-    parser.add_argument("--num_channels", type=int, default=128)
+    parser.add_argument("--msg_size", type=int, default=2)
+    parser.add_argument("--num_channels", type=int, default=2)
     parser.add_argument("--max_buffer_size", type=int, default=10)
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--output_file", type=str, default="Producer.csv")
@@ -37,7 +37,7 @@ def main():
     graph = {
         "processors": {
             "source": {
-                "class": "SimpleSource",
+                "class": "Producer",
                 "options": {
                     "nchannels": args.num_channels,
                     "nsamples": args.msg_size,
@@ -51,7 +51,7 @@ def main():
                 }
             },
             "sink": {
-                "class": "SimpleSink",
+                "class": "Consumer",
                 "options": {
                     "n_messages": args.n_messages,
                     "output_file": str(output_path)

@@ -1,18 +1,18 @@
 processors:
   source:
-    class: SimpleSource
+    class: Producer
     options:
-      nchannels: 40
-      nsamples: 4096
+      nchannels: 2
+      nsamples: 2
       n_messages: 1000
-      output_file: /home/linda/Documents/Benchmark_IPC/falcon-core-develop/rt_c_results/40_4096
+      output_file: /home/linda/Documents/Benchmark_IPC/falcon-core-develop/rt_c_results/2_2
     advanced:
       buffer_sizes:
         data: 10
   sink:
-    class: SimpleSink
+    class: Consumer
     options:
       n_messages: 1000
-      output_file: /home/linda/Documents/Benchmark_IPC/falcon-core-develop/rt_c_results/40_4096
+      output_file: /home/linda/Documents/Benchmark_IPC/falcon-core-develop/rt_c_results/2_2
 connections:
 - source.data = sink.data
