@@ -9,6 +9,7 @@ import yaml
 
 
 REPO_ROOT = Path(__file__).resolve().parent
+WORKSPACE_FALCON_CONFIG = REPO_ROOT / ".falcon" / "config.yaml"
 # PRODUCER_ROOT = REPO_ROOT / "c-producer"
 # CONSUMER_ROOT = REPO_ROOT / "c-consumer"
 
@@ -35,6 +36,7 @@ def main():
     
 
     graph = {
+        "graph": {
         "processors": {
             "source": {
                 "class": "Producer",
@@ -61,12 +63,13 @@ def main():
         "connections": [
             "source.data = sink.data"
         ]
+        }
     }
 
     with open("extensions/falcon-fklab-extensions/resources/graphs/simple_test.yaml", "w") as f:
         yaml.safe_dump(graph, f, sort_keys=False)
 
-    graph_process = subprocess.Popen(["sudo", "-E", "chrt", "-f", "99","./build/falcon/falcon", "simple_test.yaml", "--autostart"])
+    graph_process = subprocess.Popen(["sudo", "-E", "chrt", "-f", "99","./build/falcon/falcon", "simple_test.yaml","--autostart", "--config", WORKSPACE_FALCON_CONFIG]) #
 
     try:
         # 3) Wait for falcon to complete (processors will auto-exit after processing n_messages)
