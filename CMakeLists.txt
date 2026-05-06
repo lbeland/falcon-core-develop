@@ -16,7 +16,7 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Profile")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fno-omit-frame-pointer -fno-inline-functions -Wall -Wextra -Wunused -pthread")
 else()
 	message(STATUS "Release build")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra -Wunused -pthread")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra -Wunused -pthread -DCMAKE_CXX_FLAGS_RELEASE=-O3 -march=native")
 endif()
 
 set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
@@ -110,9 +110,11 @@ target_link_libraries(${YAMLCPP} yaml-cpp)
 FetchContent_GetProperties(cppzmq)
 if(NOT cppzmq_POPULATED)
 	message(STATUS "Populating zmq-cpp...")
+	# cppzmq's tests also build examples, and on some systems they inject
+	# `-isystem /usr/include` early which breaks libstdc++'s `#include_next`.
+	# This project only needs the headers, so keep them off.
+	set(CPPZMQ_BUILD_TESTS OFF CACHE BOOL "Whether or not to build the tests" FORCE)
 	FetchContent_MakeAvailable(cppzmq)
-	# Add here options for cppzmq building
-	set(CPPZMQ_BUILD_TESTS OFF CACHE BOOL "Whether or not to build the tests")
 	message(STATUS "Done.")
 endif()
 

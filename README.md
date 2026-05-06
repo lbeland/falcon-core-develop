@@ -9,7 +9,9 @@ cd build
 cmake .. -DCMAKE_BUILD_TYPE=Debug
 # or in my case i needed to use this:
 cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=gcc-14 -DCMAKE_CXX_COMPILER=g++-14
-make
+make 
+
+make CXXFLAGS='-O2 -march=native'
 
 # Add the installation path in your $PATH if not already the case
 export PATH="$PWD/build/falcon:$PATH"
