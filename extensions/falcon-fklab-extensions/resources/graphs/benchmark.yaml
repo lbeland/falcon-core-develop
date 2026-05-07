@@ -6,6 +6,7 @@ graph:
         nchannels: 40
         nsamples: 4096
         n_messages: 10000
+        t_wait: 0.0001
         output_file: /home/linda/Documents/Benchmark_IPC/falcon-core-develop/rt_c_results/40_4096
       advanced:
         buffer_sizes:

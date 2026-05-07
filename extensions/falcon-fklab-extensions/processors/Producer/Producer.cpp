@@ -29,6 +29,7 @@ Producer::Producer() : IProcessor(PRIORITY_HIGH) {
   add_option("nchannels", nchannels_, "Number of channels to generate.");
   add_option("nsamples", nsamples_, "Number of samples per packet.");
   add_option("n_messages", n_messages_, "Number of packets to generate (0 = infinite).");
+  add_option("t_wait", t_wait_, "Time to wait between messages in seconds (e.g. 0.0001 for 100us).");
   add_option("output_file", output_file_, "Path to output CSV file.");
 }
 
@@ -36,7 +37,7 @@ void Producer::CreatePorts() {
   data_out_port_ = create_output_port<MultiChannelType<double>>(
       "data",
       MultiChannelType<double>::Parameters(nchannels_(), nsamples_(), 1.0),
-      PortOutPolicy(SlotRange(1),200,WaitStrategy::kBusySpinStrategy));
+      PortOutPolicy(SlotRange(1))); //,200,WaitStrategy::kBusySpinStrategy));
 }
 
 void Producer::CompleteStreamInfo() {
@@ -70,6 +71,9 @@ void Producer::Process(ProcessingContext &context) {
 
   // Measurement phase
   for (int i=0; i < n_messages_() && !context.terminated(); i++) {
+    if (t_wait_() > 0) {
+        std::this_thread::sleep_for(std::chrono::duration<double>(t_wait_()));
+    }
     // Claim output buffer
     data_out = data_out_port_->slot(0)->ClaimData(false);
 
