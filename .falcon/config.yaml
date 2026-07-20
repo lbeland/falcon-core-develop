@@ -16,6 +16,6 @@ logging:
     port: 5556
 server_side_storage:
   environment: ./
-  resources: /home/linda/Documents/Benchmark_IPC/falcon-core-develop/extensions/falcon-fklab-extensions/resources
+  resources: ./extensions/falcon-fklab-extensions/resources
   custom:
     {}

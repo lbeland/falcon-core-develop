@@ -74,7 +74,10 @@ def main():
     with open(f"{REPO_ROOT}/extensions/falcon-fklab-extensions/resources/graphs/benchmark.yaml", "w") as f:
         yaml.safe_dump(graph, f, sort_keys=False)
 
-    graph_process = subprocess.Popen(["sudo", "-E", "chrt", "-f", "99",f"{REPO_ROOT}/build/falcon/falcon", "benchmark.yaml","--autostart", "--config", WORKSPACE_FALCON_CONFIG]) #
+    graph_process = subprocess.Popen(
+        ["sudo", "-E", "chrt", "-f", "99", f"{REPO_ROOT}/build/falcon/falcon", "benchmark.yaml", "--autostart", "--config", WORKSPACE_FALCON_CONFIG],
+        cwd=str(REPO_ROOT),
+    )
 
     try:
         # 3) Wait for falcon to complete (processors will auto-exit after processing n_messages)
