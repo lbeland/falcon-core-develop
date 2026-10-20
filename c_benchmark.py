@@ -51,7 +51,7 @@ def main():
                     "buffer_sizes": {
                         "data": args.max_buffer_size
                     },
-                    "thread_core": 5
+                    "thread_core": 6
                 }
             },
             "sink": {
@@ -61,7 +61,7 @@ def main():
                     "output_file": str(output_path)
                 },
                 "advanced": {
-                    "thread_core": 6
+                    "thread_core": 7
                 }
             }
         },

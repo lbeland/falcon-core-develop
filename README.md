@@ -1,28 +1,51 @@
-## Install requirements
+# falcon-core-develop — IPC benchmark
+
+Origin: https://github.com/falcon-eyrie/falcon-core
+
+[Falcon](https://github.com/falcon-eyrie/falcon-core) is a C++ real-time
+processing framework built around a graph of processors connected by ring
+buffers. `c_benchmark.py` drives a two-processor graph (`Producer` →
+`Consumer`, under `extensions/falcon-fklab-extensions/processors/`) and
+times message delivery.
+
+## Install
+
+From the repo root:
+
 ```bash
-pip install -r requirements.txt
-sudo apt-get install libzmq3-dev
-sudo apt install gcc-14 g++-14
-
-mkdir build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=Debug
-# or in my case i needed to use this:
-cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=gcc-14 -DCMAKE_CXX_COMPILER=g++-14
-make 
-
-make CXXFLAGS='-O2 -march=native'
-
-# Add the installation path in your $PATH if not already the case
-export PATH="$PWD/build/falcon:$PATH"
-
-# Allow falcon to more finely control CPU core utilization.
-sudo setcap 'cap_sys_nice=pe' ./build/falcon/falcon 
-
-# Check if installation worked
-falcon --help
+./bootstrap.sh --only falcon-core-develop --with-builds --with-system-deps
 ```
-## Start Benchmark
+
+This installs `libzmq3-dev`/`gcc-14`/`g++-14`, then configures and builds
+falcon in Release mode using the venv's own `cmake` (Ubuntu 24.04's system
+`cmake` 3.28 has no GNU flag mapping for C++26, which this project
+requires — pip installs a newer one into `falcon-core-develop/venv`
+automatically) and `gcc-14`/`g++-14`. Without `--with-system-deps`, run the
+`setcap` command it prints manually so falcon can get real-time thread
+priority.
+
+## Run the benchmark
+
 ```bash
-python3 c_benchmark.py --overwrite
+cd falcon-core-develop
+venv/bin/python3 c_benchmark.py \
+  --n_messages 1000 \
+  --num_channels 2 \
+  --msg_size 2 \
+  --t_wait 0.0001 \
+  --overwrite
 ```
+
+This writes `extensions/falcon-fklab-extensions/resources/graphs/benchmark.yaml`
+and launches `build/falcon/falcon` (via `sudo chrt -f 99`) with that graph.
+Falcon's `resources:` storage path in `.falcon/config.yaml` is relative
+(`./extensions/...`), so it only resolves correctly when falcon is launched
+with its CWD set to this directory — `c_benchmark.py` already does this.
+
+- `--n_messages`: number of timed messages sent
+- `--num_channels` / `--msg_size`: shape of each message
+- `--t_wait`: seconds the producer sleeps between sends (0 = no wait)
+- `--overwrite`: rerun even if results for this channel/size combination
+  already exist
+
+Results are written to `rt_c_results/<num_channels>_<msg_size>_{Producer,Consumer,send_times,recv_times,process_times}.csv`.

@@ -37,7 +37,7 @@ void Producer::CreatePorts() {
   data_out_port_ = create_output_port<MultiChannelType<double>>(
       "data",
       MultiChannelType<double>::Parameters(nchannels_(), nsamples_(), 1.0),
-      PortOutPolicy(SlotRange(1))); //,200,WaitStrategy::kBusySpinStrategy));
+      PortOutPolicy(SlotRange(1),200,WaitStrategy::kBlockingStrategy));
 }
 
 void Producer::CompleteStreamInfo() {

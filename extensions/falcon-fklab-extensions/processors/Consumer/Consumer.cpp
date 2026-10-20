@@ -143,32 +143,25 @@ void Consumer::Postprocess(ProcessingContext &context) {
 
 
   // Save to CSV
-  std::string append = "_Consumer.csv";
-  std::ofstream output;
-  output.open(output_file_().c_str() + append);
-  output << "Metric,Recv_period,Latency,Throughput\n";
-  output << "mean," << avg_period << "," << avg_latency << "," << throughput << "\n";
-  output << "std," << std_period << "," << std_latency << ",\n";
-  output << "max," << max_diff*1e6 << "," << max*1e6 << ",\n";
-  output.close();
+    std::string base = output_file_();
+    if (base.size() > 4 && base.substr(base.size() - 4) == ".csv") base.resize(base.size() - 4);
 
-  append = "_recv_times.csv";
-  std::ofstream recv_times_output;
-  recv_times_output << std::fixed << std::setprecision(17);
-  recv_times_output.open(output_file_().c_str() + append);
-  for (double t : recv_times_diff) {
-      recv_times_output << t << "\n";
-  }
-  recv_times_output.close();
+    std::ofstream output;
+    output.open(base + "_Consumer.csv");
+    output << "Metric,Recv_period,Latency,Throughput\n";
+    output << "mean," << avg_period << "," << avg_latency << "," << throughput << "\n";
+    output << "std," << std_period << "," << std_latency << ",\n";
+    output << "max," << max_diff*1e6 << "," << max*1e6 << ",\n";
+    output.close();
 
-  append = "_process_times.csv";
-  std::ofstream process_times_output;
-  process_times_output << std::fixed << std::setprecision(17);
-  process_times_output.open(output_file_().c_str() + append);
-  for (double t : process_times) {
+    // Persist only per-packet process_times (no recv_times file)
+    std::ofstream process_times_output;
+    process_times_output << std::fixed << std::setprecision(17);
+    process_times_output.open(base + "_process_times.csv");
+    for (double t : process_times) {
       process_times_output << t << "\n";
-  }
-  process_times_output.close();
+    }
+    process_times_output.close();
 }
 
 REGISTERPROCESSOR(Consumer);
